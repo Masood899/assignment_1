@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+        }
+        button {
+            cursor: pointer;
+        }
+        .product-list {
+            margin-top: 20px;
+        }
+        .product-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Product Management System</h1>
+
+        <!-- Add Product Form -->
+        <form id="product-form">
+            <input type="text" id="product-name" placeholder="Product Name" required>
+            <input type="number" id="product-price" placeholder="Price" required>
+            <button type="submit">Add Product</button>
+        </form>
+
+        <!-- Apply Discount -->
+        <div class="discount-section">
+            <input type="number" id="discount-percentage" placeholder="Discount %" required>
+            <button onclick="applyDiscount()">Apply Discount</button>
+        </div>
+
+        <!-- Product List -->
+        <div class="product-list" id="product-list">
+            <!-- Products will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display products
+        async function fetchProducts() {
+            const response = await fetch('/api/products');
+            const products = await response.json();
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; // Clear existing list
+
+            products.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'product-item';
+                productItem.innerHTML = `
+                    <strong>${product.name}</strong> - ₹${product.price}
+                    <button onclick="deleteProduct(${product.id})">Delete</button>
+                `;
+                productList.appendChild(productItem);
+            });
+        }
+
+        // Add a new product
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('product-name').value;
+            const price = document.getElementById('product-price').value;
+
+            const response = await fetch('/api/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, price }),
+            });
+
+            if (response.ok) {
+                alert('Product added successfully!');
+                fetchProducts(); // Refresh the product list
+            } else {
+                alert('Failed to add product.');
+            }
+        });
+
+        // Delete a product
+        async function deleteProduct(id) {
+            const response = await fetch(`/api/products/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                alert('Product deleted successfully!');
+                fetchProducts(); // Refresh the product list
+            } else {
+                alert('Failed to delete product.');
+            }
+        }
+
+        // Apply discount
+        async function applyDiscount() {
+            const discount = document.getElementById('discount-percentage').value;
+
+            const response = await fetch('/api/products/discount', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ discount }),
+            });
+
+            if (response.ok) {
+                alert('Discount applied successfully!');
+                fetchProducts(); // Refresh the product list
+            } else {
+                alert('Failed to apply discount.');
+            }
+        }
+
+        // Load products when the page loads
+        fetchProducts();
+    </script>
+</body>
+</html>
